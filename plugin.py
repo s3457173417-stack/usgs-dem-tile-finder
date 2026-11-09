@@ -22,6 +22,7 @@ from qgis.core import (
     QgsFillSymbol,
     QgsGeometry,
     QgsHillshadeRenderer,
+    QgsMessageLog,
     QgsNetworkAccessManager,
     QgsPalLayerSettings,
     QgsPointXY,
@@ -134,7 +135,7 @@ class USGSDEMTileFinderPlugin:
     def show_dock(self):
         if self.dock is None:
             self.dock = FinderDock(self.iface.mainWindow())
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
 
             self.dock.pick_btn.clicked.connect(self.activate_pick_point)
             self.dock.extent_btn.clicked.connect(self.use_canvas_extent)
@@ -445,12 +446,12 @@ class USGSDEMTileFinderPlugin:
         self.iface.messageBar().pushMessage(
             "USGS DEM Tile Finder",
             msg,
-            level=Qgis.Info,
+            level=Qgis.MessageLevel.Info,
             duration=4,
         )
 
     def _point_clicked(self, point, button):
-        if button != Qt.LeftButton:
+        if button != Qt.MouseButton.LeftButton:
             return
         try:
             wgs84_point = self._transform_point(
@@ -596,7 +597,7 @@ class USGSDEMTileFinderPlugin:
                     self.iface.messageBar().pushMessage(
                         "USGS DEM Tile Finder",
                         "提示：区域跨越多个 UTM Zone（如亚利桑那州 Zone 11 / Zone 12 交界）。当前 1m 模式按中心所在分带计算；大范围分析可切换为 10m / 30m (1°×1°) 模式。",
-                        level=Qgis.Warning,
+                        level=Qgis.MessageLevel.Warning,
                         duration=10,
                     )
 
@@ -754,14 +755,14 @@ class USGSDEMTileFinderPlugin:
                 else f"正在查询 {self._mode_label()}…"
             )
             request = QNetworkRequest(url)
-            request.setRawHeader(b"User-Agent", b"QGIS-USGS-DEM-Tile-Finder/0.4.0")
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            request.setRawHeader(b"User-Agent", b"QGIS-USGS-DEM-Tile-Finder/0.4.1")
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
                 reply = QgsNetworkAccessManager.blockingGet(request, "", True)
             finally:
                 QApplication.restoreOverrideCursor()
 
-            if reply.error() != QNetworkReply.NoError:
+            if reply.error() != QNetworkReply.NetworkError.NoError:
                 msg = reply.errorString() or "未知网络错误"
                 self.scan_local_cache(auto_import=False)
                 self._update_tile_layer_attributes()
@@ -818,7 +819,7 @@ class USGSDEMTileFinderPlugin:
                     self.iface.messageBar().pushMessage(
                         "USGS DEM Tile Finder",
                         fallback_msg,
-                        level=Qgis.Info,
+                        level=Qgis.MessageLevel.Info,
                         duration=8,
                     )
                     if self._last_input_kind == "point" and self._last_wgs84_lonlat:
@@ -985,8 +986,8 @@ class USGSDEMTileFinderPlugin:
         if previous_active and QgsProject.instance().mapLayer(previous_active.id()):
             try:
                 self.iface.setActiveLayer(previous_active)
-            except Exception:
-                pass
+            except Exception as exc:
+                QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
 
         if self._zoom_to_result:
             self.zoom_to_tiles()
@@ -1112,9 +1113,17 @@ class USGSDEMTileFinderPlugin:
             downloadable = bool(rec and rec.get("download_url"))
 
             check = QTableWidgetItem("")
-            check.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | Qt.ItemIsSelectable)
-            check.setCheckState(Qt.Checked if (tile in self.required_tiles and downloadable) else Qt.Unchecked)
-            check.setData(Qt.UserRole, tile)
+            check.setFlags(
+                Qt.ItemFlag.ItemIsEnabled
+                | Qt.ItemFlag.ItemIsUserCheckable
+                | Qt.ItemFlag.ItemIsSelectable
+            )
+            check.setCheckState(
+                Qt.CheckState.Checked
+                if (tile in self.required_tiles and downloadable)
+                else Qt.CheckState.Unchecked
+            )
+            check.setData(Qt.ItemDataRole.UserRole, tile)
             table.setItem(row, 0, check)
 
             local_path = self.local_product_paths.get(tile)
@@ -1136,7 +1145,7 @@ class USGSDEMTileFinderPlugin:
             ]
             for col, value in enumerate(values, start=1):
                 item = QTableWidgetItem(value)
-                item.setData(Qt.UserRole, tile)
+                item.setData(Qt.ItemDataRole.UserRole, tile)
                 table.setItem(row, col, item)
 
         if table.rowCount():
@@ -1149,7 +1158,7 @@ class USGSDEMTileFinderPlugin:
         if row < 0:
             return
         item = self.dock.table.item(row, 1)
-        tile = item.data(Qt.UserRole) if item else None
+        tile = item.data(Qt.ItemDataRole.UserRole) if item else None
         if not tile:
             return
 
@@ -1232,8 +1241,8 @@ class USGSDEMTileFinderPlugin:
         skipped_local = []
         for row in range(self.dock.table.rowCount()):
             item = self.dock.table.item(row, 0)
-            if item and item.checkState() == Qt.Checked:
-                tile = tuple(item.data(Qt.UserRole))
+            if item and item.checkState() == Qt.CheckState.Checked:
+                tile = tuple(item.data(Qt.ItemDataRole.UserRole))
                 local_path = self.local_product_paths.get(tile)
                 if local_path and os.path.exists(local_path):
                     skipped_local.append((tile, local_path))
@@ -1297,8 +1306,8 @@ class USGSDEMTileFinderPlugin:
             if os.path.exists(part_path):
                 try:
                     os.remove(part_path)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
 
             downloader = QgsFileDownloader(url, part_path, "", True)
             downloader.downloadCompleted.connect(
@@ -1383,15 +1392,15 @@ class USGSDEMTileFinderPlugin:
             self.iface.messageBar().pushMessage(
                 "USGS DEM Tile Finder",
                 msg,
-                level=Qgis.Success,
+                level=Qgis.MessageLevel.Success,
                 duration=5,
             )
         except Exception as exc:
             try:
                 if os.path.exists(part_path):
                     os.remove(part_path)
-            except Exception:
-                pass
+            except Exception as rm_exc:
+                QgsMessageLog.logMessage(str(rm_exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
             self._set_tile_download_status(tile, 0, "failed")
             self._update_overall_download_progress()
             self._warn(
@@ -1478,8 +1487,8 @@ class USGSDEMTileFinderPlugin:
             try:
                 path.unlink()
                 removed += 1
-            except Exception:
-                pass
+            except Exception as exc:
+                QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
 
         for ext in ("*.tif", "*.tiff", "*.TIF", "*.TIFF"):
             for path in Path(self.cache_dir).glob(ext):
@@ -1489,8 +1498,8 @@ class USGSDEMTileFinderPlugin:
                     try:
                         path.unlink()
                         removed += 1
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
 
         if not silent and self.dock:
             if self.lang == "en":
@@ -1508,8 +1517,8 @@ class USGSDEMTileFinderPlugin:
                     self._populate_table(
                         query_state=self._tr("queried") if self.recommendations else self._tr("not_queried")
                     )
-                except Exception:
-                    pass
+                except Exception as exc:
+                    QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
         return removed
 
     def scan_local_cache(self, auto_import=True):
@@ -1649,8 +1658,8 @@ class USGSDEMTileFinderPlugin:
             renderer = QgsHillshadeRenderer(hs_layer.dataProvider(), 1, 315.0, 45.0)
             hs_layer.setRenderer(renderer)
             hs_layer.setOpacity(0.45)
-        except Exception:
-            pass
+        except Exception as exc:
+            QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
         QgsProject.instance().addMapLayer(hs_layer)
         return True
 
@@ -1694,8 +1703,8 @@ class USGSDEMTileFinderPlugin:
                     if use_hs:
                         self._add_hillshade_for_layer(vrt_path, os.path.splitext(vrt_name)[0])
                     return imported, already, missing
-            except Exception:
-                pass
+            except Exception as exc:
+                QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
 
         for path in valid_paths:
             if self._add_raster_if_needed(path):
@@ -1741,8 +1750,8 @@ class USGSDEMTileFinderPlugin:
         checked_tiles = []
         for row in range(self.dock.table.rowCount()):
             item = self.dock.table.item(row, 0)
-            if item and item.checkState() == Qt.Checked:
-                value = item.data(Qt.UserRole)
+            if item and item.checkState() == Qt.CheckState.Checked:
+                value = item.data(Qt.ItemDataRole.UserRole)
                 if value:
                     checked_tiles.append(tuple(value))
 
@@ -1827,8 +1836,8 @@ class USGSDEMTileFinderPlugin:
                     source = layer.source().split("|", 1)[0]
                     if os.path.normcase(os.path.abspath(source)) == path_norm:
                         return False
-            except Exception:
-                pass
+            except Exception as exc:
+                QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
 
         layer = self.iface.addRasterLayer(path, os.path.basename(path))
         return bool(layer and layer.isValid())
@@ -1861,7 +1870,7 @@ class USGSDEMTileFinderPlugin:
             item = table.item(row, 1)
             if not item:
                 continue
-            item_tile = item.data(Qt.UserRole)
+            item_tile = item.data(Qt.ItemDataRole.UserRole)
             if not item_tile or tuple(item_tile) != tuple(tile):
                 continue
 
@@ -1952,8 +1961,8 @@ class USGSDEMTileFinderPlugin:
         for downloader in active:
             try:
                 downloader.cancelDownload()
-            except Exception:
-                pass
+            except Exception as exc:
+                QgsMessageLog.logMessage(str(exc), "USGS DEM Tile Finder", Qgis.MessageLevel.Info)
 
         for path, tile in self.download_targets.items():
             state = self.download_progress.get(path, {})
@@ -2023,7 +2032,7 @@ class USGSDEMTileFinderPlugin:
         if row < 0:
             return None
         item = self.dock.table.item(row, 1)
-        value = item.data(Qt.UserRole) if item else None
+        value = item.data(Qt.ItemDataRole.UserRole) if item else None
         return tuple(value) if value else None
 
     def _winning_project_label(self):
@@ -2058,12 +2067,12 @@ class USGSDEMTileFinderPlugin:
         if self.dock:
             self.dock.set_status(text)
         self.iface.messageBar().pushMessage(
-            "USGS DEM Tile Finder", text, level=Qgis.Warning, duration=8
+            "USGS DEM Tile Finder", text, level=Qgis.MessageLevel.Warning, duration=8
         )
 
     def _error(self, text):
         if self.dock:
             self.dock.set_status(text)
         self.iface.messageBar().pushMessage(
-            "USGS DEM Tile Finder", text, level=Qgis.Critical, duration=10
+            "USGS DEM Tile Finder", text, level=Qgis.MessageLevel.Critical, duration=10
         )

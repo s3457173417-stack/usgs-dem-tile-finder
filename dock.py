@@ -258,9 +258,9 @@ class FinderDock(QDockWidget):
         super().__init__("USGS DEM Tile Finder", parent)
         self.setObjectName("USGSDEMTileFinderDock")
         self.setFeatures(
-            QDockWidget.DockWidgetClosable
-            | QDockWidget.DockWidgetMovable
-            | QDockWidget.DockWidgetFloatable
+            QDockWidget.DockWidgetFeature.DockWidgetClosable
+            | QDockWidget.DockWidgetFeature.DockWidgetMovable
+            | QDockWidget.DockWidgetFeature.DockWidgetFloatable
         )
 
         self.lang = "en"
@@ -274,9 +274,9 @@ class FinderDock(QDockWidget):
 
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.scroll.setFrameShape(QFrame.NoFrame)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
         root_layout.addWidget(self.scroll)
 
         self.content = QWidget()
@@ -327,7 +327,7 @@ class FinderDock(QDockWidget):
         source_row = QHBoxLayout()
         self.source_label = QLabel()
         self.source_combo = QComboBox()
-        self.source_combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.source_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._populate_source_combo("en")
         source_row.addWidget(self.source_label)
         source_row.addWidget(self.source_combo, 1)
@@ -341,7 +341,7 @@ class FinderDock(QDockWidget):
         self.layer_btn = QPushButton()
         for b in (self.pick_btn, self.extent_btn, self.layer_btn):
             b.setMinimumHeight(30)
-            b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            b.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         detect_row.addWidget(self.pick_btn, 1)
         detect_row.addWidget(self.extent_btn, 1)
@@ -364,7 +364,7 @@ class FinderDock(QDockWidget):
 
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
-        self.status_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.status_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         s1.addWidget(self.status_label)
 
         layout.addWidget(self.section1)
@@ -394,16 +394,16 @@ class FinderDock(QDockWidget):
         s2.addLayout(result_controls)
 
         self.table = QTableWidget(0, 7)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
-        self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setMinimumHeight(160)
         self.table.setMaximumHeight(700)
 
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.Interactive)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.resizeSection(0, 48)
         header.resizeSection(1, 86)
         header.resizeSection(2, 74)
@@ -421,7 +421,7 @@ class FinderDock(QDockWidget):
         self.clear_btn = QPushButton()
 
         for b in (self.query_btn, self.open_btn, self.download_btn, self.clear_btn):
-            b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            b.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         result_btns.addWidget(self.query_btn)
         result_btns.addWidget(self.open_btn)
@@ -483,7 +483,7 @@ class FinderDock(QDockWidget):
 
         self.progress_label = QLabel()
         self.progress_label.setWordWrap(True)
-        self.progress_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.progress_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         s3.addWidget(self.progress_label)
 
         self.progress_bar = QProgressBar()
