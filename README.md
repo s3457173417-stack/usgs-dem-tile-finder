@@ -1,6 +1,10 @@
-# USGS 3DEP DEM Tile Finder for QGIS (`v0.4.0`)
+# USGS 3DEP DEM Tile Finder for QGIS (`v0.4.2`)
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20Me%20a%20Coffee%20☕-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/susnzhe)
 
 Nationwide US **USGS 3DEP Digital Elevation Model (DEM)** finder, local cache manager, and downloader for QGIS (`1m`, `10m 1/3 arc-sec`, and `30m 1 arc-sec`) with automatic resolution fallback, active Parcel/vector layer detection, seamless VRT mosaic & Hillshade generation, one-click satellite basemap, and a 4-language UI (`English` default, `简体中文`, `Español`, `Français`).
+
+> ☕ **Support / 赞赏支持**: If this plugin saved you time on your GIS, surveying, or civil/hydrology projects, feel free to [Buy Me a Coffee on Ko-fi (https://ko-fi.com/susnzhe)](https://ko-fi.com/susnzhe)!
 
 ---
 

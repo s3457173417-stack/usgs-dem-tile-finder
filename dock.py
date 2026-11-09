@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QUrl
+from qgis.PyQt.QtGui import QDesktopServices
 from qgis.PyQt.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QSpinBox, QCheckBox, QComboBox, QTableWidget, QHeaderView,
@@ -299,6 +300,13 @@ class FinderDock(QDockWidget):
         self.float_btn = QPushButton("Float")
         self.float_btn.setMaximumWidth(68)
 
+        self.support_btn = QPushButton("☕ Support")
+        self.support_btn.setMaximumWidth(86)
+        self.support_btn.setToolTip("Support open-source development on Ko-fi: https://ko-fi.com/susnzhe")
+        self.support_btn.clicked.connect(
+            lambda: QDesktopServices.openUrl(QUrl("https://ko-fi.com/susnzhe"))
+        )
+
         self.lang_combo = QComboBox()
         self.lang_combo.setFixedWidth(96)
         for label, code in LANGUAGES:
@@ -311,6 +319,7 @@ class FinderDock(QDockWidget):
         top_row.addWidget(self.basemap_btn)
         top_row.addWidget(self.best_size_btn)
         top_row.addWidget(self.float_btn)
+        top_row.addWidget(self.support_btn)
         top_row.addWidget(self.lang_combo)
         layout.addLayout(top_row)
 
@@ -594,6 +603,7 @@ class FinderDock(QDockWidget):
         self.best_size_btn.setToolTip(self._t("best_size_tip"))
         self.float_btn.setText(self._t("dock_win") if self.isFloating() else self._t("float_win"))
         self.float_btn.setToolTip(self._t("float_tip"))
+        self.support_btn.setText("☕ 赞赏" if lang == "zh" else "☕ Support")
         self._populate_source_combo(lang)
 
         self.intro.setText(self._t("intro"))

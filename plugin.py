@@ -755,7 +755,7 @@ class USGSDEMTileFinderPlugin:
                 else f"正在查询 {self._mode_label()}…"
             )
             request = QNetworkRequest(url)
-            request.setRawHeader(b"User-Agent", b"QGIS-USGS-DEM-Tile-Finder/0.4.1")
+            request.setRawHeader(b"User-Agent", b"QGIS-USGS-DEM-Tile-Finder/0.4.2")
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
                 reply = QgsNetworkAccessManager.blockingGet(request, "", True)
